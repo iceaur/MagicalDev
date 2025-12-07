@@ -3,37 +3,58 @@ import random
 
 pygame.init()
 
-# Tela
+# -------------------------
+# Configurações da tela
+# -------------------------
 LARGURA = 800
 ALTURA = 600
 tela = pygame.display.set_mode((LARGURA, ALTURA))
 pygame.display.set_caption("Magical Dev Girl")
 
-# Cores
+# -------------------------
+# Cores e fontes
+# -------------------------
 BRANCO = (255, 255, 255)
-ROSA = (255, 100, 180)
-ROSA_FORTE = (255, 0, 120)
-AZUL = (100, 150, 255)
-ROXO = (150, 80, 255)
 VERDE = (0, 255, 0)
 VERMELHO = (255, 50, 50)
 PRETO = (0, 0, 0)
 
 clock = pygame.time.Clock()
-
 fonte = pygame.font.SysFont(None, 40)
 fonte_grande = pygame.font.SysFont(None, 70)
 
-# ---------------------------------------------------------
-# TELA INICIAL  (APARECE SÓ NA PRIMEIRA VEZ)
-# ---------------------------------------------------------
+# -------------------------
+# Carregar sprites
+# -------------------------
+player_img = pygame.image.load("assets/personagem.png").convert_alpha()
+player_img = pygame.transform.scale(player_img, (60, 60))
+
+enemy_img = pygame.image.load("assets/error.png").convert_alpha()
+enemy_img = pygame.transform.scale(enemy_img, (40, 40))
+
+boss_img = pygame.image.load("assets/nave.png").convert_alpha()
+boss_img = pygame.transform.scale(boss_img, (300, 80))
+
+background = pygame.image.load("assets/cenario.png").convert()
+background = pygame.transform.scale(background, (LARGURA, ALTURA))
+
+# -------------------------
+# Função para texto com sombra
+# -------------------------
+def render_texto_sombra(texto, fonte, cor_texto, cor_sombra, x, y, tela):
+    sombra = fonte.render(texto, True, cor_sombra)
+    tela.blit(sombra, (x + 2, y + 2))
+    principal = fonte.render(texto, True, cor_texto)
+    tela.blit(principal, (x, y))
+
+# -------------------------
+# Tela inicial
+# -------------------------
 def tela_inicial():
     while True:
-        tela.fill(PRETO)
-        t1 = fonte_grande.render("MAGICAL DEV GIRL", True, BRANCO)
-        t2 = fonte.render("PRESSIONE ENTER PARA JOGAR", True, BRANCO)
-        tela.blit(t1, (200, 200))
-        tela.blit(t2, (230, 350))
+        tela.blit(background, (0,0))
+        render_texto_sombra("MAGICAL DEV GIRL", fonte_grande, BRANCO, PRETO, 200, 200, tela)
+        render_texto_sombra("PRESSIONE ENTER PARA JOGAR", fonte, BRANCO, PRETO, 230, 350, tela)
 
         for e in pygame.event.get():
             if e.type == pygame.QUIT:
@@ -43,20 +64,15 @@ def tela_inicial():
                 return
         pygame.display.update()
 
-
-# ---------------------------------------------------------
-# TELA GAME OVER
-# ---------------------------------------------------------
+# -------------------------
+# Tela Game Over
+# -------------------------
 def tela_game_over(pontos):
     while True:
-        tela.fill(PRETO)
-        over = fonte_grande.render("GAME OVER", True, BRANCO)
-        pont = fonte.render(f"Pontuação: {pontos}", True, BRANCO)
-        restart = fonte.render("ENTER para jogar de novo", True, BRANCO)
-
-        tela.blit(over, (260, 200))
-        tela.blit(pont, (320, 300))
-        tela.blit(restart, (230, 400))
+        tela.blit(background, (0,0))
+        render_texto_sombra("GAME OVER", fonte_grande, BRANCO, PRETO, 260, 200, tela)
+        render_texto_sombra(f"Pontuação: {pontos}", fonte, BRANCO, PRETO, 320, 300, tela)
+        render_texto_sombra("ENTER para jogar de novo", fonte, BRANCO, PRETO, 230, 400, tela)
 
         for e in pygame.event.get():
             if e.type == pygame.QUIT:
@@ -66,20 +82,15 @@ def tela_game_over(pontos):
                 return
         pygame.display.update()
 
-
-# ---------------------------------------------------------
-# TELA VITÓRIA
-# ---------------------------------------------------------
+# -------------------------
+# Tela Vitória
+# -------------------------
 def tela_vitoria(pontos):
     while True:
-        tela.fill((20, 0, 40))
-        msg = fonte_grande.render("VOCÊ VENCEU!", True, BRANCO)
-        pont = fonte.render(f"Pontuação Final: {pontos}", True, BRANCO)
-        restart = fonte.render("ENTER para jogar novamente", True, BRANCO)
-
-        tela.blit(msg, (230, 200))
-        tela.blit(pont, (260, 300))
-        tela.blit(restart, (210, 400))
+        tela.blit(background, (0,0))
+        render_texto_sombra("VOCÊ VENCEU!", fonte_grande, BRANCO, PRETO, 230, 200, tela)
+        render_texto_sombra(f"Pontuação Final: {pontos}", fonte, BRANCO, PRETO, 260, 300, tela)
+        render_texto_sombra("ENTER para jogar novamente", fonte, BRANCO, PRETO, 210, 400, tela)
 
         for e in pygame.event.get():
             if e.type == pygame.QUIT:
@@ -87,13 +98,28 @@ def tela_vitoria(pontos):
                 exit()
             if e.type == pygame.KEYDOWN and e.key == pygame.K_RETURN:
                 return
-
         pygame.display.update()
 
+# -------------------------
+# Mostrar mensagem (ex: fase)
+# -------------------------
+def mostrar_mensagem(msg, jogador, tiros, inimigos, chefe):
+    for i in range(60):  # 1 segundo a 60 FPS
+        tela.blit(background, (0, 0))
+        tela.blit(player_img, jogador)
+        for t in tiros:
+            pygame.draw.rect(tela, VERDE, t)
+        for i_inim in inimigos:
+            tela.blit(enemy_img, i_inim)
+        if chefe:
+            tela.blit(boss_img, chefe)
+        render_texto_sombra(msg, fonte_grande, BRANCO, PRETO, 200, 250, tela)
+        pygame.display.update()
+        clock.tick(60)
 
-# ---------------------------------------------------------
-# JOGO PRINCIPAL
-# ---------------------------------------------------------
+# -------------------------
+# Jogo principal
+# -------------------------
 def jogar():
     jogador = pygame.Rect(370, 520, 60, 60)
     velocidade = 7
@@ -104,31 +130,27 @@ def jogar():
     inimigos = []
     tiros_inimigos = []
 
-    # fases
     fase = 1
     kills_para_proxima = 8
     kills = 0
     vel_inimigo = 4
-    cor_jogadora = ROSA
 
-    # chefe
     chefe = None
     vida_chefe = 0
     tempo_bug = 0
     tempo_tiro_chefe = 0
-    direcao_chefe = 1   # ← NOVO: controla o movimento
+    direcao_chefe = 1
 
     rodando = True
 
     while rodando:
         clock.tick(60)
 
-        # EVENTOS
+        # Eventos
         for evento in pygame.event.get():
             if evento.type == pygame.QUIT:
                 pygame.quit()
                 exit()
-
             if evento.type == pygame.KEYDOWN:
                 if evento.key == pygame.K_SPACE:
                     tiros.append(pygame.Rect(jogador.centerx - 5, jogador.top, 10, 20))
@@ -139,16 +161,16 @@ def jogar():
         if teclas[pygame.K_RIGHT] and jogador.right < LARGURA:
             jogador.x += velocidade
 
-        # CRIAR INIMIGOS
+        # Criar inimigos
         if fase < 4 and random.randint(1, 30) == 1:
             inimigos.append(pygame.Rect(random.randint(0, 760), 0, 40, 40))
 
-        # CHEFE aparece na FASE 4
+        # Chefe aparece na fase 4
         if fase == 4 and chefe is None:
             chefe = pygame.Rect(250, 50, 300, 80)
             vida_chefe = 30
 
-        # TIROS DO JOGADOR
+        # Tiros jogador
         novos_tiros = []
         for tiro in tiros:
             tiro.y -= 10
@@ -156,16 +178,14 @@ def jogar():
                 novos_tiros.append(tiro)
         tiros = novos_tiros
 
-        # INIMIGOS
+        # Inimigos
         novos_inimigos = []
         for inimigo in inimigos:
             inimigo.y += vel_inimigo
-
             if inimigo.colliderect(jogador):
                 vida -= 1
                 continue
 
-            # tiro acertando inimigo
             acertado = False
             for tiro in tiros[:]:
                 if inimigo.colliderect(tiro):
@@ -178,40 +198,34 @@ def jogar():
                 novos_inimigos.append(inimigo)
         inimigos = novos_inimigos
 
-        # ATAQUE E MOVIMENTO DO CHEFE
+        # Chefe
         if chefe is not None:
-
-            ### MOVIMENTO LATERAL CORRIGIDO ###
             chefe.x += 4 * direcao_chefe
             if chefe.right >= LARGURA:
                 direcao_chefe = -1
             if chefe.left <= 0:
                 direcao_chefe = 1
 
-            # lançar mini bugs
             tempo_bug += 1
             if tempo_bug > 40:
                 inimigos.append(pygame.Rect(chefe.centerx, chefe.bottom, 40, 40))
                 tempo_bug = 0
 
-            # tiros do chefe
             tempo_tiro_chefe += 1
             if tempo_tiro_chefe > 30:
                 tiros_inimigos.append(pygame.Rect(chefe.centerx, chefe.bottom, 12, 25))
                 tempo_tiro_chefe = 0
 
-            # tomar dano
             for tiro in tiros[:]:
                 if chefe.colliderect(tiro):
                     tiros.remove(tiro)
                     vida_chefe -= 1
-
                     if vida_chefe <= 0:
                         pontos += 30
                         chefe = None
                         return ("vitoria", pontos)
 
-        # TIROS DO CHEFE
+        # Tiros chefe
         novos_tiros_chefe = []
         for t in tiros_inimigos:
             t.y += 8
@@ -221,56 +235,58 @@ def jogar():
                 novos_tiros_chefe.append(t)
         tiros_inimigos = novos_tiros_chefe
 
-        # MUDAR DE FASE
+        # Mudança de fase
         if kills >= kills_para_proxima and fase < 4:
             fase += 1
             vida += 1
             kills = 0
             kills_para_proxima += 4
             vel_inimigo += 1
+            mostrar_mensagem(f"FASE {fase}", jogador, tiros, inimigos, chefe)
 
-            if fase == 2:
-                cor_jogadora = ROSA_FORTE
-            elif fase == 3:
-                cor_jogadora = AZUL
-
+        # ---------------------
         # DESENHAR TELA
-        tela.fill(PRETO)
-        pygame.draw.rect(tela, cor_jogadora, jogador)
+        # ---------------------
+        tela.blit(background, (0, 0))
 
+        # jogador
+        tela.blit(player_img, jogador)
+
+        # tiros jogador
         for t in tiros:
             pygame.draw.rect(tela, VERDE, t)
 
+        # inimigos
         for i in inimigos:
-            pygame.draw.rect(tela, BRANCO, i)
+            tela.blit(enemy_img, i)
 
+        # tiros chefe
         for t in tiros_inimigos:
             pygame.draw.rect(tela, VERMELHO, t)
 
+        # chefe
         if chefe is not None:
-            pygame.draw.rect(tela, ROXO, chefe)
+            tela.blit(boss_img, chefe)
             pygame.draw.rect(tela, VERMELHO, (chefe.x, chefe.y - 20, chefe.width, 10))
             pygame.draw.rect(tela, VERDE, (chefe.x, chefe.y - 20, chefe.width * (vida_chefe / 30), 10))
 
-        tela.blit(fonte.render(f"Vida: {vida}", True, BRANCO), (10, 10))
-        tela.blit(fonte.render(f"Pontos: {pontos}", True, BRANCO), (10, 40))
-        tela.blit(fonte.render(f"Fase: {fase}", True, BRANCO), (10, 70))
+        # HUD
+        render_texto_sombra(f"Vida: {vida}", fonte, BRANCO, PRETO, 10, 10, tela)
+        render_texto_sombra(f"Pontos: {pontos}", fonte, BRANCO, PRETO, 10, 40, tela)
+        render_texto_sombra(f"Fase: {fase}", fonte, BRANCO, PRETO, 10, 70, tela)
 
         pygame.display.update()
 
         if vida <= 0:
             return ("gameover", pontos)
 
-
-# ---------------------------------------------------------
+# -------------------------
 # LOOP PRINCIPAL
-# ---------------------------------------------------------
-
-tela_inicial()   # só aparece 1 vez
+# -------------------------
+tela_inicial()  # aparece só uma vez
 
 while True:
     tipo, score = jogar()
-
     if tipo == "gameover":
         tela_game_over(score)
     else:
